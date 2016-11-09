@@ -6,34 +6,34 @@ namespace GB.StateMachine
 {
     public class FiniteStateMachine <T>
     {
-        Dictionary<ITransition<T>, IState> transitions;
+        Dictionary<ITransition<T>, IState<T>> transitions;
 
         /// <summary>
         /// Active state in the state machine.
         /// </summary>
-        private IState currentState;
+        private IState<T> currentState;
 
         /// <summary>
         /// Last active state in the state machine.
         /// </summary>
-        private IState previousState;
+        private IState<T> previousState;
 
         /// <summary>
         /// Initialize state machine with it's start state. Call the OnEnter method of the start state.
         /// </summary>
         /// <param name="initialState">Initial state of the state machine.</param>
-        public FiniteStateMachine(IState initialState)
+        public FiniteStateMachine(IState<T> initialState)
         {
             currentState = initialState;
-            currentState.OnEnter();
-            transitions = new Dictionary<ITransition<T>, IState>();
+            currentState.OnEnter(initialState);
+            transitions = new Dictionary<ITransition<T>, IState<T>>();
         }
 
         /// <summary>
         /// Create a transition from one state to the next
         /// </summary>
         /// <param name="transition"></param>
-        public void AddTransition(ITransition<T> transition, IState state)
+        public void AddTransition(ITransition<T> transition, IState<T> state)
         {
             transitions.Add(transition, state);
         }
@@ -43,7 +43,9 @@ namespace GB.StateMachine
         /// </summary>
         public void Execute()
         {
-            currentState.Execute();
+            ITransition<T> transition = currentState.Execute();
+            if (transition != null)
+                ChangeState(transition);
         }
 
         /// <summary>
@@ -56,7 +58,7 @@ namespace GB.StateMachine
             currentState = transitions[transition];
 
             previousState.OnExit();
-            currentState.OnEnter();
+            currentState.OnEnter(previousState);
         }
 
 
